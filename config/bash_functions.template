@@ -1,0 +1,175 @@
+# Custom bash functions
+
+# Create a new directory and enter it
+mkcd() {
+    mkdir -p "$1" && cd "$1"
+}
+
+# Extract various archive formats
+extract() {
+    if [ -f "$1" ]; then
+        case "$1" in
+            *.tar.bz2)   tar xjf "$1"     ;;
+            *.tar.gz)    tar xzf "$1"     ;;
+            *.bz2)       bunzip2 "$1"     ;;
+            *.rar)       unrar e "$1"     ;;
+            *.gz)        gunzip "$1"      ;;
+            *.tar)       tar xf "$1"      ;;
+            *.tbz2)      tar xjf "$1"     ;;
+            *.tgz)       tar xzf "$1"     ;;
+            *.zip)       unzip "$1"       ;;
+            *.Z)         uncompress "$1"  ;;
+            *.7z)        7z x "$1"        ;;
+            *)           echo "'$1' cannot be extracted via extract()" ;;
+        esac
+    else
+        echo "'$1' is not a valid file"
+    fi
+}
+
+# Find a file with a pattern in name
+findfile() {
+    find . -type f -name "*$1*"
+}
+
+# Find a directory with a pattern in name
+finddir() {
+    find . -type d -name "*$1*"
+}
+
+# Search for a pattern in files
+findtext() {
+    grep -r "$1" .
+}
+
+# Create a backup of a file
+backup() {
+    cp "$1"{,.bak}
+}
+
+# Create a new git repo
+gitnew() {
+    git init
+    touch README.md .gitignore
+    git add README.md .gitignore
+    git commit -m "Initial commit"
+}
+
+# Improved git clone that changes into the cloned directory
+clone() {
+    git clone "$1" && cd "$(basename "$1" .git)"
+}
+
+# Get the current git branch
+gitbranch() {
+    git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'
+}
+
+# Update all git repositories in a directory
+gitupdate() {
+    find . -type d -name .git -prune -execdir git pull \;
+}
+
+# Shortcut for kubectl get pods
+kgp() {
+    kubectl get pods "$@"
+}
+
+# Shortcut for kubectl get services
+kgs() {
+    kubectl get services "$@"
+}
+
+# Shortcut for kubectl get deployments
+kgd() {
+    kubectl get deployments "$@"
+}
+
+# Watch kubernetes resources
+kw() {
+    watch -n 2 kubectl get "$@"
+}
+
+# Create a new directory, copy a template structure, and initialize
+project() {
+    local type="${1:-basic}"
+    local name="${2:-project}"
+    
+    mkdir -p "$name"
+    cd "$name" || return
+    
+    case "$type" in
+        node)
+            echo "Creating Node.js project structure..."
+            mkdir -p src test config
+            touch README.md .gitignore package.json
+            echo '{ "name": "'$name'", "version": "1.0.0", "description": "", "main": "index.js", "scripts": { "test": "echo \"Error: no test specified\" && exit 1" }, "keywords": [], "author": "", "license": "ISC" }' > package.json
+            echo 'node_modules\nnpm-debug.log\n.env\n.DS_Store' > .gitignore
+            echo "# $name\n\nA new Node.js project." > README.md
+            touch src/index.js
+            ;;
+        python)
+            echo "Creating Python project structure..."
+            mkdir -p src tests docs
+            touch README.md .gitignore requirements.txt
+            echo 'venv/\n__pycache__/\n*.py[cod]\n*$py.class\n.env\n.DS_Store' > .gitignore
+            echo "# $name\n\nA new Python project." > README.md
+            touch src/__init__.py src/main.py
+            touch tests/__init__.py
+            ;;
+        web)
+            echo "Creating web project structure..."
+            mkdir -p css js img
+            touch index.html css/style.css js/script.js
+            echo '<!DOCTYPE html>\n<html>\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>'$name'</title>\n  <link rel="stylesheet" href="css/style.css">\n</head>\n<body>\n  <h1>'$name'</h1>\n  <script src="js/script.js"></script>\n</body>\n</html>' > index.html
+            ;;
+        *)
+            echo "Creating basic project structure..."
+            mkdir -p src docs
+            touch README.md .gitignore
+            echo "# $name\n\nA new project." > README.md
+            ;;
+    esac
+    
+    git init
+    git add .
+    git commit -m "Initial project structure"
+    echo "Project $name created successfully."
+}
+
+# Convert a file to PDF
+to_pdf() {
+    if command -v pandoc > /dev/null; then
+        pandoc "$1" -o "${1%.*}.pdf"
+    else
+        echo "Pandoc is not installed"
+    fi
+}
+
+# Check the weather
+weather() {
+    curl -s "wttr.in/${1:-}"
+}
+
+# Simple HTTP server in current directory
+serve_dir() {
+    local port="${1:-8000}"
+    python -m http.server "$port"
+}
+
+# Git commit with a message
+commit() {
+    git commit -m "$*"
+}
+
+# Create and attach to a tmux session
+tm() {
+    local session_name="${1:-dev}"
+    tmux new-session -A -s "$session_name"
+}
+
+# Run a command in the background, disown it, and silence output
+background() {
+    "$@" > /dev/null 2>&1 &
+    disown
+}

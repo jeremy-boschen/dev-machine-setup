@@ -97,23 +97,45 @@ ensure_executable() {
     chmod +x "$SCRIPTS_DIR/dev_setup.sh"
 }
 
-# Function to update .bashrc
+# Function to update bash configuration files
 setup_bashrc() {
-    log "info" "Setting up .bashrc..."
+    log "info" "Setting up modular bash configuration..."
     
-    if [[ -f "$CONFIG_DIR/bashrc.template" ]]; then
-        # Backup existing .bashrc if it exists
-        if [[ -f "$HOME/.bashrc" ]]; then
-            cp "$HOME/.bashrc" "$HOME/.bashrc.backup.$(date +%Y%m%d%H%M%S)"
-            log "info" "Backed up existing .bashrc"
+    # Create each bash config file if template exists
+    local bash_files=(
+        "bashrc"
+        "bash_aliases"
+        "bash_functions"
+        "bash_paths"
+    )
+    
+    for file in "${bash_files[@]}"; do
+        if [[ -f "$CONFIG_DIR/${file}.template" ]]; then
+            # Backup existing file if it exists
+            if [[ -f "$HOME/.${file}" ]]; then
+                cp "$HOME/.${file}" "$HOME/.${file}.backup.$(date +%Y%m%d%H%M%S)"
+                log "info" "Backed up existing .${file}"
+            fi
+            
+            # Create or update file
+            cp "$CONFIG_DIR/${file}.template" "$HOME/.${file}"
+            log "success" "Updated .${file}"
+        else
+            log "warning" "${file}.template not found in $CONFIG_DIR"
         fi
-        
-        # Create or update .bashrc
-        cp "$CONFIG_DIR/bashrc.template" "$HOME/.bashrc"
-        log "success" "Updated .bashrc"
-    else
-        log "error" "bashrc.template not found in $CONFIG_DIR"
+    done
+    
+    # Create an empty .bashrc_local for user customizations
+    if [[ ! -f "$HOME/.bashrc_local" ]]; then
+        cat > "$HOME/.bashrc_local" << 'EOF'
+# Local customizations for your bash environment
+# This file won't be overwritten by the dev environment setup script
+# Add your personal settings, aliases, and functions here
+EOF
+        log "info" "Created .bashrc_local for user customizations"
     fi
+    
+    log "success" "Bash configuration setup complete"
 }
 
 # Function to update .gitconfig

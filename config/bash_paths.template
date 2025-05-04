@@ -1,0 +1,76 @@
+# Custom PATH and environment variables
+
+# Set PATH to include dev tools bins
+export PATH="$HOME/dev/tools/bin:$PATH"
+
+# Add other tool directories to PATH
+if [ -d "$HOME/dev/tools/git/bin" ]; then
+    export PATH="$HOME/dev/tools/git/bin:$PATH"
+fi
+
+# Node.js
+if [ -d "$HOME/dev/tools/nodejs" ]; then
+    # Find the default Node.js version (symlinked to bin)
+    if [ -L "$HOME/dev/tools/bin/node.exe" ]; then
+        NODE_DEFAULT_DIR=$(dirname "$(readlink -f "$HOME/dev/tools/bin/node.exe")")
+        export PATH="$NODE_DEFAULT_DIR:$PATH"
+    fi
+    
+    # List all Node.js versions in PATH for version switching
+    for node_dir in "$HOME/dev/tools/nodejs"/node-v*; do
+        if [ -d "$node_dir" ]; then
+            export PATH="$path:$PATH"
+        fi
+    done
+fi
+
+# Python
+if [ -d "$HOME/dev/tools/python" ]; then
+    # Find the default Python version (symlinked to bin)
+    if [ -L "$HOME/dev/tools/bin/python.exe" ]; then
+        PYTHON_DEFAULT_DIR=$(dirname "$(readlink -f "$HOME/dev/tools/bin/python.exe")")
+        export PATH="$PYTHON_DEFAULT_DIR:$PATH"
+        
+        # Add Scripts directory for pip, etc.
+        if [ -d "$PYTHON_DEFAULT_DIR/Scripts" ]; then
+            export PATH="$PYTHON_DEFAULT_DIR/Scripts:$PATH"
+        fi
+    fi
+    
+    # List all Python versions in PATH for version switching
+    for python_dir in "$HOME/dev/tools/python"/Python*; do
+        if [ -d "$python_dir" ]; then
+            export PATH="$python_dir:$PATH"
+            
+            # Add Scripts directory for pip, etc.
+            if [ -d "$python_dir/Scripts" ]; then
+                export PATH="$python_dir/Scripts:$PATH"
+            fi
+        fi
+    done
+fi
+
+# Rust
+if [ -d "$HOME/dev/tools/rust" ]; then
+    export RUSTUP_HOME="$HOME/dev/tools/rust"
+    export CARGO_HOME="$HOME/dev/tools/rust"
+    export PATH="$CARGO_HOME/bin:$PATH"
+fi
+
+# SDKMAN
+export SDKMAN_DIR="$HOME/dev/tools/sdkman"
+[[ -s "$SDKMAN_DIR/bin/sdkman-init.sh" ]] && source "$SDKMAN_DIR/bin/sdkman-init.sh"
+
+# Editors
+if [ -d "$HOME/dev/tools/sublime_text" ]; then
+    export PATH="$HOME/dev/tools/sublime_text:$PATH"
+fi
+
+if [ -d "$HOME/dev/tools/notepad++" ]; then
+    export PATH="$HOME/dev/tools/notepad++:$PATH"
+fi
+
+# Add any user-specific bin directory
+if [ -d "$HOME/bin" ]; then
+    export PATH="$HOME/bin:$PATH"
+fi
