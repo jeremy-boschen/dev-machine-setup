@@ -21,6 +21,38 @@ CODE_DIR="$DEV_DIR/code"
 SCRIPTS_DIR="$DEV_DIR/scripts"
 CONFIG_DIR="$SCRIPTS_DIR/config"
 TOOLS_SCRIPTS_DIR="$SCRIPTS_DIR/tools"
+OPTIONS_FILE="$CONFIG_DIR/dev_setup_options.json"
+
+# Default options if the file doesn't exist
+DEFAULT_OPTIONS='{
+  "cli_tools": {
+    "install": true
+  },
+  "languages": {
+    "install": true,
+    "node": {
+      "install": true
+    },
+    "python": {
+      "install": true
+    },
+    "rust": {
+      "install": true
+    },
+    "sdkman": {
+      "install": true
+    }
+  },
+  "editors": {
+    "install": true
+  },
+  "terminal": {
+    "install": true
+  },
+  "git": {
+    "configure": true
+  }
+}'
 
 # Log function for consistent output
 log() {
@@ -88,22 +120,90 @@ setup_bashrc() {
 setup_gitconfig() {
     log "info" "Setting up Git config..."
     
+    # Check if Git configuration is enabled
+    if [[ "$(get_option ".git.configure")" != "true" ]]; then
+        log "info" "Git configuration is disabled in options, skipping"
+        return 0
+    fi
+    
     if [[ -f "$CONFIG_DIR/gitconfig.template" ]]; then
-        # Ask for user input
-        echo "Please enter your Git user name:"
-        read -r GIT_USER_NAME
+        # Get stored values if available
+        local git_user_name="$(get_option ".git.user.name")"
+        local git_user_email="$(get_option ".git.user.email")"
         
-        echo "Please enter your Git email:"
-        read -r GIT_USER_EMAIL
+        # Ask for user input if not stored
+        if [[ -z "$git_user_name" ]]; then
+            echo "Please enter your Git user name:"
+            read -r git_user_name
+        fi
+        
+        if [[ -z "$git_user_email" ]]; then
+            echo "Please enter your Git email:"
+            read -r git_user_email
+        fi
         
         # Replace placeholders in the template
-        sed -e "s/{{GIT_USER_NAME}}/$GIT_USER_NAME/g" \
-            -e "s/{{GIT_USER_EMAIL}}/$GIT_USER_EMAIL/g" \
+        sed -e "s/{{GIT_USER_NAME}}/$git_user_name/g" \
+            -e "s/{{GIT_USER_EMAIL}}/$git_user_email/g" \
             "$CONFIG_DIR/gitconfig.template" > "$HOME/.gitconfig"
         
         log "success" "Git configuration complete"
     else
         log "warning" "gitconfig.template not found, skipping Git config setup"
+    fi
+}
+
+# Function to load options from file
+load_options() {
+    log "info" "Loading configuration options..."
+    
+    # Check if options file exists
+    if [[ -f "$OPTIONS_FILE" ]]; then
+        log "info" "Using options from $OPTIONS_FILE"
+        OPTIONS="$(cat "$OPTIONS_FILE")"
+    else
+        log "warning" "Options file not found, using default options"
+        OPTIONS="$DEFAULT_OPTIONS"
+        
+        # Create options file with default options
+        mkdir -p "$(dirname "$OPTIONS_FILE")"
+        echo "$DEFAULT_OPTIONS" > "$OPTIONS_FILE"
+        log "info" "Created default options file at $OPTIONS_FILE"
+    fi
+    
+    # Verify we have jq installed
+    if ! command -v jq &> /dev/null; then
+        log "info" "jq is not available, loading default options"
+        return
+    fi
+    
+    # Validate JSON format
+    if ! echo "$OPTIONS" | jq '.' &> /dev/null; then
+        log "warning" "Invalid JSON in options file, using default options"
+        OPTIONS="$DEFAULT_OPTIONS"
+    fi
+}
+
+# Function to get an option value using jq
+get_option() {
+    local path="$1"
+    local default_value="${2:-false}"
+    
+    # If jq is not available, return default
+    if ! command -v jq &> /dev/null; then
+        echo "$default_value"
+        return
+    fi
+    
+    # Try to get the value, return default if not found
+    local value
+    value=$(echo "$OPTIONS" | jq -r "$path // \"$default_value\"" 2>/dev/null)
+    
+    # Handle empty or null values
+    if [[ -z "$value" || "$value" == "null" ]]; then
+        echo "$default_value"
+    else
+        echo "$value"
     fi
 }
 
@@ -270,25 +370,44 @@ main() {
     # Check for required scripts
     check_required_scripts
     
+    # Load options
+    load_options
+    
     # Git is already installed via portable Git, but run the script for additional config
     log "info" "Running Git setup and configuration..."
-    bash "$TOOLS_SCRIPTS_DIR/install_git.sh"
+    bash "$TOOLS_SCRIPTS_DIR/install_git.sh" --options-file="$OPTIONS_FILE"
     
-    # Install Windows Terminal
-    log "info" "Installing Windows Terminal..."
-    bash "$TOOLS_SCRIPTS_DIR/install_terminal.sh"
+    # Install Windows Terminal if enabled
+    if [[ "$(get_option ".terminal.install")" == "true" ]]; then
+        log "info" "Installing Windows Terminal..."
+        bash "$TOOLS_SCRIPTS_DIR/install_terminal.sh" --options-file="$OPTIONS_FILE"
+    else
+        log "info" "Terminal installation disabled in options, skipping"
+    fi
     
-    # Install text editors
-    log "info" "Installing text editors..."
-    bash "$TOOLS_SCRIPTS_DIR/install_editors.sh"
+    # Install text editors if enabled
+    if [[ "$(get_option ".editors.install")" == "true" ]]; then
+        log "info" "Installing text editors..."
+        bash "$TOOLS_SCRIPTS_DIR/install_editors.sh" --options-file="$OPTIONS_FILE"
+    else
+        log "info" "Editors installation disabled in options, skipping"
+    fi
     
-    # Install CLI tools
-    log "info" "Installing CLI tools..."
-    bash "$TOOLS_SCRIPTS_DIR/install_cli_tools.sh"
+    # Install CLI tools if enabled
+    if [[ "$(get_option ".cli_tools.install")" == "true" ]]; then
+        log "info" "Installing CLI tools..."
+        bash "$TOOLS_SCRIPTS_DIR/install_cli_tools.sh" --options-file="$OPTIONS_FILE"
+    else
+        log "info" "CLI tools installation disabled in options, skipping"
+    fi
     
-    # Install programming languages and package managers
-    log "info" "Installing programming languages and package managers..."
-    bash "$TOOLS_SCRIPTS_DIR/install_languages.sh"
+    # Install programming languages and package managers if enabled
+    if [[ "$(get_option ".languages.install")" == "true" ]]; then
+        log "info" "Installing programming languages and package managers..."
+        bash "$TOOLS_SCRIPTS_DIR/install_languages.sh" --options-file="$OPTIONS_FILE"
+    else
+        log "info" "Languages installation disabled in options, skipping"
+    fi
     
     # Set up .bashrc and .gitconfig
     setup_bashrc
@@ -299,6 +418,10 @@ main() {
     
     # Verify all installations
     verify_installations
+    
+    # Inform user about options file
+    log "info" "Setup complete! To customize tool installations, edit $OPTIONS_FILE"
+    log "info" "And then run this script again to apply changes."
     
     log "success" "Developer environment setup complete!"
     log "info" "Please start a new Git Bash session to use your new environment."

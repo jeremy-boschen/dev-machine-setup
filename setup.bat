@@ -17,6 +17,9 @@ echo.
 echo All tools will be installed to \dev\tools without admin rights
 echo Git Bash will be configured as the default shell
 echo.
+echo You can customize which tools to install by setting options
+echo in the file dev_setup_options.json after initial Git setup.
+echo.
 echo ======================================================
 
 :: Check if running from an admin prompt (not required and potentially problematic)

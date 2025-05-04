@@ -1,0 +1,77 @@
+{
+  "cli_tools": {
+    "install": true,
+    "tools": {
+      "jq": true,
+      "yq": true,
+      "kubectl": true,
+      "k9s": true,
+      "age": true,
+      "dive": true,
+      "gh": true,
+      "kind": true,
+      "pandoc": true,
+      "bat": true,
+      "fd": true,
+      "ripgrep": true,
+      "fzf": true,
+      "helm": true
+    }
+  },
+  "languages": {
+    "install": true,
+    "node": {
+      "install": true,
+      "versions": [
+        {
+          "version": "18.16.1",
+          "default": true
+        },
+        {
+          "version": "20.5.1",
+          "default": false
+        }
+      ]
+    },
+    "python": {
+      "install": true,
+      "versions": [
+        {
+          "version": "3.11.4",
+          "default": true
+        },
+        {
+          "version": "3.9.13",
+          "default": false
+        }
+      ]
+    },
+    "rust": {
+      "install": true
+    },
+    "sdkman": {
+      "install": true,
+      "java": {
+        "install": true,
+        "version": "17.0.7-tem"
+      }
+    }
+  },
+  "editors": {
+    "install": true,
+    "sublime_text": true,
+    "notepad_plus_plus": true,
+    "vscode": false
+  },
+  "terminal": {
+    "install": true,
+    "windows_terminal": true
+  },
+  "git": {
+    "user": {
+      "name": "",
+      "email": ""
+    },
+    "configure": true
+  }
+}
