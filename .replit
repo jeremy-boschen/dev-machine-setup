@@ -1,0 +1,40 @@
+modules = ["bash"]
+
+[nix]
+channel = "stable-24_05"
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Windows Dev Environment Setup"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "windows_dev_setup"
+
+[[workflows.workflow]]
+name = "Windows Dev Environment Setup"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "bash dev_setup.sh"
+waitForPort = 5000
+
+[[workflows.workflow]]
+name = "windows_dev_setup"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cmd.exe /c setup.bat"
+
+[deployment]
+run = ["sh", "-c", "bash dev_setup.sh"]

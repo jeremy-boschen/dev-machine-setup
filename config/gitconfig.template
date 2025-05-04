@@ -1,0 +1,51 @@
+[user]
+    name = {{GIT_USER_NAME}}
+    email = {{GIT_USER_EMAIL}}
+
+[core]
+    editor = vim
+    autocrlf = true
+    whitespace = trailing-space,space-before-tab
+    excludesfile = ~/.gitignore
+
+[color]
+    ui = auto
+
+[pull]
+    rebase = true
+
+[push]
+    default = simple
+
+[fetch]
+    prune = true
+
+[rebase]
+    autosquash = true
+
+[alias]
+    co = checkout
+    br = branch
+    ci = commit
+    st = status
+    unstage = reset HEAD --
+    last = log -1 HEAD
+    visual = !gitk
+    lg = log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
+
+[help]
+    autocorrect = 1
+
+[diff]
+    algorithm = patience
+    tool = vimdiff
+
+[merge]
+    tool = vimdiff
+    conflictstyle = diff3
+
+[credential]
+    helper = cache
+
+[init]
+    defaultBranch = main
